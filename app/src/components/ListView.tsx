@@ -9,6 +9,7 @@ import { initAudio, playCheckOnSound, playCheckOffSound } from "@/lib/sound";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SurveyModal } from "@/components/SurveyModal";
 import { AiEditPanel } from "@/components/AiEditPanel";
+import { AddItemPanel } from "@/components/AddItemPanel";
 import { HeadcountEditor } from "@/components/HeadcountEditor";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { listChannelName, LIST_UPDATED_EVENT } from "@/lib/realtime";
@@ -29,7 +30,9 @@ function groupByCategory(items: ItemDto[]): [string, ItemDto[]][] {
 
 export function ListView({ initialData }: { initialData: ListDto }) {
   const [data, setData] = useState<ListDto>(initialData);
-  const [confirmTarget, setConfirmTarget] = useState<ItemDto | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<
+    { item: ItemDto; action: "uncheck" | "delete" } | null
+  >(null);
   const [showSurvey, setShowSurvey] = useState(false);
   const [copied, setCopied] = useState(false);
   const localUpdateRef = useRef(0);
@@ -102,7 +105,7 @@ export function ListView({ initialData }: { initialData: ListDto }) {
   function handleCheckboxClick(item: ItemDto) {
     if (item.checked) {
       // FR-2.6: チェックを外す時は確認ダイアログ
-      setConfirmTarget(item);
+      setConfirmTarget({ item, action: "uncheck" });
     } else {
       toggleCheck(item, true);
     }
@@ -164,7 +167,7 @@ export function ListView({ initialData }: { initialData: ListDto }) {
       </header>
 
       <main className="mx-auto w-full max-w-xl flex-1 px-4 py-4">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col gap-2">
           <AiEditPanel
             shareCode={data.shareCode}
             items={data.items}
@@ -172,6 +175,12 @@ export function ListView({ initialData }: { initialData: ListDto }) {
             onApplied={(items) => setData((prev) => ({ ...prev, items }))}
             onCallsRemainingChange={(remaining) =>
               setData((prev) => ({ ...prev, aiCallsRemaining: remaining }))
+            }
+          />
+          <AddItemPanel
+            shareCode={data.shareCode}
+            onAdded={(item) =>
+              setData((prev) => ({ ...prev, items: [...prev.items, item] }))
             }
           />
         </div>
@@ -185,7 +194,7 @@ export function ListView({ initialData }: { initialData: ListDto }) {
               {items.map((item) => (
                 <li
                   key={item.id}
-                  className={`flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm dark:bg-neutral-900 ${
+                  className={`flex items-center gap-3 rounded-2xl bg-white p-2 shadow-sm dark:bg-neutral-900 ${
                     item.checked ? "opacity-60" : ""
                   }`}
                 >
@@ -196,36 +205,39 @@ export function ListView({ initialData }: { initialData: ListDto }) {
                     className="h-6 w-6 shrink-0 accent-orange-500"
                   />
                   <div className="min-w-0 flex-1">
-                    <p
-                      className={`text-sm font-semibold text-neutral-800 dark:text-neutral-100 ${
-                        item.checked ? "line-through" : ""
-                      }`}
-                    >
-                      {item.name}
-                    </p>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p
+                        className={`truncate text-sm font-semibold text-neutral-800 dark:text-neutral-100 ${
+                          item.checked ? "line-through" : ""
+                        }`}
+                      >
+                        {item.name}
+                      </p>
+                      <p className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
+                        ¥{item.subtotal.toLocaleString()}
+                      </p>
+                    </div>
                     {item.note && (
                       <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                         {item.note}
                       </p>
                     )}
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      ¥{item.subtotal.toLocaleString()}
-                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <input
                       type="number"
+                      inputMode="numeric"
                       min={0}
                       max={999}
                       value={item.purchaseQty}
                       onChange={(e) => updateQty(item, Number(e.target.value))}
-                      className="w-14 rounded-lg border border-orange-200 px-2 py-1 text-right text-sm dark:bg-neutral-800 dark:border-orange-800"
+                      className="w-16 [appearance:textfield] rounded-lg border border-orange-200 px-2 py-1 text-right text-sm dark:bg-neutral-800 dark:border-orange-800 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                     <span className="text-xs text-neutral-500 dark:text-neutral-400">
                       {item.unit}
                     </span>
                     <button
-                      onClick={() => deleteItem(item)}
+                      onClick={() => setConfirmTarget({ item, action: "delete" })}
                       aria-label="削除"
                       className="ml-1 rounded-lg px-2 py-1 text-xs text-red-500"
                     >
@@ -241,10 +253,21 @@ export function ListView({ initialData }: { initialData: ListDto }) {
 
       <ConfirmDialog
         open={confirmTarget !== null}
-        message={`「${confirmTarget?.name ?? ""}」のチェックを外しますか？`}
+        message={
+          confirmTarget?.action === "delete"
+            ? `「${confirmTarget.item.name}」を削除しますか？`
+            : `「${confirmTarget?.item.name ?? ""}」のチェックを外しますか？`
+        }
+        confirmLabel={confirmTarget?.action === "delete" ? "削除" : "外す"}
         onCancel={() => setConfirmTarget(null)}
         onConfirm={() => {
-          if (confirmTarget) toggleCheck(confirmTarget, false);
+          if (confirmTarget) {
+            if (confirmTarget.action === "delete") {
+              deleteItem(confirmTarget.item);
+            } else {
+              toggleCheck(confirmTarget.item, false);
+            }
+          }
           setConfirmTarget(null);
         }}
       />

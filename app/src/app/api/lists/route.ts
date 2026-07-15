@@ -9,6 +9,7 @@ import {
   serializeOptions,
   CONDITION_KEYS,
   TEMPERATURE_VALUES,
+  APPETITE_VALUES,
 } from "@/lib/logic/generate-list";
 import { apiError } from "@/lib/api-error";
 
@@ -19,6 +20,7 @@ const bodySchema = z.object({
     .object({
       ...Object.fromEntries(CONDITION_KEYS.map((k) => [k, z.boolean().optional()])),
       temperature: z.enum(TEMPERATURE_VALUES).optional(),
+      appetite: z.enum(APPETITE_VALUES).optional(),
     })
     .partial()
     .optional(),

@@ -55,22 +55,24 @@ export function HeadcountEditor({ shareCode, adults, childrenCount, onUpdated }:
         大人
         <input
           type="number"
+          inputMode="numeric"
           min={1}
           max={99}
           value={adultsInput}
           onChange={(e) => setAdultsInput(Number(e.target.value))}
-          className="w-14 rounded border border-orange-300 px-1 py-0.5 dark:bg-neutral-800 dark:border-orange-800"
+          className="w-16 [appearance:textfield] rounded border border-orange-300 px-1 py-0.5 dark:bg-neutral-800 dark:border-orange-800 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
       </label>
       <label className="flex items-center gap-1">
         子供
         <input
           type="number"
+          inputMode="numeric"
           min={0}
           max={99}
           value={childrenInput}
           onChange={(e) => setChildrenInput(Number(e.target.value))}
-          className="w-14 rounded border border-orange-300 px-1 py-0.5 dark:bg-neutral-800 dark:border-orange-800"
+          className="w-16 [appearance:textfield] rounded border border-orange-300 px-1 py-0.5 dark:bg-neutral-800 dark:border-orange-800 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
       </label>
       <button

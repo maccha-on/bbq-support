@@ -20,8 +20,18 @@ export const TEMPERATURE_FACTORS: Record<Temperature, number> = {
   cool: 0.75,
 };
 
+// 食欲オプション: 人数比例で計算される食材の必要量を ±20% 補正する
+export const APPETITE_VALUES = ["late_lunch", "normal", "starving"] as const;
+export type Appetite = (typeof APPETITE_VALUES)[number];
+export const APPETITE_FACTORS: Record<Appetite, number> = {
+  late_lunch: 0.8,
+  normal: 1,
+  starving: 1.2,
+};
+
 export type ListOptions = Record<ConditionKey, boolean> & {
   temperature: Temperature;
+  appetite: Appetite;
 };
 
 export const DEFAULT_OPTIONS: ListOptions = {
@@ -32,6 +42,7 @@ export const DEFAULT_OPTIONS: ListOptions = {
   smore: true,
   rice: true,
   temperature: "normal",
+  appetite: "normal",
 };
 
 export function parseOptions(json: string): ListOptions {

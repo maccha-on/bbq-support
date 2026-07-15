@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { DEFAULT_OPTIONS, TEMPERATURE_VALUES, type ConditionKey, type ListOptions } from "@/lib/list-options";
+import { APPETITE_VALUES, DEFAULT_OPTIONS, TEMPERATURE_VALUES, type ConditionKey, type ListOptions } from "@/lib/list-options";
 import chara from "../../../public/chara.png";
 
 const OPTION_LABELS: { key: ConditionKey; label: string }[] = [
@@ -19,6 +19,12 @@ const TEMPERATURE_LABELS: Record<(typeof TEMPERATURE_VALUES)[number], string> = 
   normal: "普通",
   hot: "暑い（ビール+25%）",
   cool: "涼しい（ビール-25%）",
+};
+
+const APPETITE_LABELS: Record<(typeof APPETITE_VALUES)[number], string> = {
+  late_lunch: "昼ごはん遅め（食材-20%）",
+  normal: "ふつう",
+  starving: "お腹ペコペコ（食材+20%）",
 };
 
 export default function NewListPage() {
@@ -128,6 +134,28 @@ export default function NewListPage() {
                   />
                   <span className="text-neutral-700 dark:text-neutral-200">
                     {TEMPERATURE_LABELS[value]}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
+            <p className="mb-3 text-sm font-semibold text-orange-900 dark:text-orange-100">
+              みんなのお腹具合
+            </p>
+            <div className="flex flex-col gap-2">
+              {APPETITE_VALUES.map((value) => (
+                <label key={value} className="flex items-center gap-3 text-sm">
+                  <input
+                    type="radio"
+                    name="appetite"
+                    checked={options.appetite === value}
+                    onChange={() => setOptions((prev) => ({ ...prev, appetite: value }))}
+                    className="h-4 w-4 accent-orange-500"
+                  />
+                  <span className="text-neutral-700 dark:text-neutral-200">
+                    {APPETITE_LABELS[value]}
                   </span>
                 </label>
               ))}

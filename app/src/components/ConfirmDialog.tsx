@@ -3,12 +3,13 @@
 type Props = {
   open: boolean;
   message: string;
+  confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-// FR-2.6: チェックを外す際の確認ダイアログ
-export function ConfirmDialog({ open, message, onConfirm, onCancel }: Props) {
+// FR-2.6: チェックを外す際/品目削除の確認ダイアログ
+export function ConfirmDialog({ open, message, confirmLabel = "外す", onConfirm, onCancel }: Props) {
   if (!open) return null;
 
   return (
@@ -26,7 +27,7 @@ export function ConfirmDialog({ open, message, onConfirm, onCancel }: Props) {
             onClick={onConfirm}
             className="flex-1 rounded-xl bg-red-500 px-4 py-2 font-semibold text-white"
           >
-            外す
+            {confirmLabel}
           </button>
         </div>
       </div>

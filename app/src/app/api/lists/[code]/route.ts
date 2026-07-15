@@ -6,7 +6,7 @@ import {
   parseOptions,
   recomputeItemsForHeadcountChange,
 } from "@/lib/logic/generate-list";
-import { CONDITION_KEYS, DEFAULT_OPTIONS, TEMPERATURE_VALUES } from "@/lib/list-options";
+import { APPETITE_VALUES, CONDITION_KEYS, DEFAULT_OPTIONS, TEMPERATURE_VALUES } from "@/lib/list-options";
 import { apiError, notFoundError } from "@/lib/api-error";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rate-limit";
 import { notifyListUpdated } from "@/lib/realtime";
@@ -50,6 +50,7 @@ const patchSchema = z.object({
     .object({
       ...Object.fromEntries(CONDITION_KEYS.map((k) => [k, z.boolean().optional()])),
       temperature: z.enum(TEMPERATURE_VALUES).optional(),
+      appetite: z.enum(APPETITE_VALUES).optional(),
     })
     .partial()
     .optional(),
