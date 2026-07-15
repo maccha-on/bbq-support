@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 原単位マスタ（非公開データ。local/data/shopping_list.csv からシードする）
+model BaseItem {
+  id             String  @id @default(uuid())
+  category       String
+  name           String
+  conditionKey   String? // smoke / yakisoba / ahijo / breakfast / smore / rice （空欄なら常時有効）
+  conditionValue String? // yes / no
+  qtyPerAdult    Float?
+  qtyPerChild    Float?
+  fixedQty       Float?
+  minQty         Float? // 最低数量。stepPeople指定時は「最低数+人数刻みで加算」、未指定時は「人数比例(qtyPerAdult/qtyPerChild)とminQtyの大きい方」として扱う
+  stepPeople     Int?   // 何人ごとに増やすか（合計人数=adults+children基準、切り捨て）。minQtyとセットで使用、未指定なら人数比例とのmax
+  stepQty        Float? // stepPeople人ごとに増やす数量
+  unit           String
+  unitPrice      Float?
+  roundMode      String  @default("up") // 購入数量への丸め方向: "up"(切り上げ・既定) / "down"(切り下げ)
+  shortNote      String?
+  detailNote     String?
+  sortOrder      Int     @default(0)
+  active         Boolean @default(true)
+
+  // Supabaseプロジェクトを他サービスと共有するため、テーブル名は bbq_ 接頭辞で衝突を避ける
+  @@map("bbq_base_items")
+}
+
+model ShoppingList {
+  id              String   @id @default(uuid())
+  shareCode       String   @unique
+  adults          Int
+  children        Int
+  options         String // JSON文字列: { smoke: bool, yakisoba: bool, ahijo: bool, breakfast: bool, smore: bool, rice: bool, temperature: "normal"|"hot"|"cool" }
+  aiCallCount     Int      @default(0)
+  surveyTriggered Boolean  @default(false)
+  surveyTriggeredAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items     Item[]
+  feedbacks Feedback[]
+
+  @@map("bbq_lists")
+}
+
+model Item {
+  id             String   @id @default(uuid())
+  listId         String
+  list           ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  category       String
+  name           String
+  requiredAmount Float // 計算済み必要量（表示用の目安）
+  unit           String
+  purchaseQty    Float // 購入数量
+  unitPrice      Float
+  subtotal       Float
+  note           String?
+  checked        Boolean  @default(false)
+  manualEdit     Boolean  @default(false) // 手動編集済みなら人数変更時の再計算対象外
+  sourceBaseItemId String? // 生成元の原単位マスタID（手動追加品目はnull）
+  sortOrder      Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  @@map("bbq_items")
+}
+
+model Feedback {
+  id            String   @id @default(uuid())
+  listId        String
+  list          ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  shortageItems String // JSON文字列: [{ itemName, kind: 'excess'|'shortage', reason }]
+  wantedItems   String?
+  createdAt     DateTime @default(now())
+
+  @@map("bbq_feedbacks")
+}
+
+// 共有コード総当たり対策（specs/logic-design.md §3.3）: IP単位の固定ウィンドウ制限
+model RateLimit {
+  key         String   @id // 例: "code-lookup:{ip}"
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+
+  @@map("bbq_rate_limits")
+}

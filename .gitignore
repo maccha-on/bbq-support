@@ -1,0 +1,19 @@
+# 秘密データ（原単位の元データ・実績の買い出しデータ）
+local/
+local_ref/
+
+# 環境変数
+.env
+.env*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# エディタ
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Claude Code ローカル設定
+.claude/
